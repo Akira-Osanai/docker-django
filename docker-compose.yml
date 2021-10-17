@@ -1,0 +1,45 @@
+# docker-composeのバージョン
+version: '3.8'
+
+services:
+  db:
+    # postgresqlの最新版イメージを使用する。
+    image: postgres
+    # コンテナ起動時には常に再起動する。
+    restart: always
+    # postgresのデータベース永続化
+    volumes:
+      - ./db/data:/var/lib/postgres/data
+    # 標準出力をオープン
+    stdin_open: true
+    # 標準入力をオープン
+    tty: true
+    # 環境変数の設定
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - TZ=${TZ}
+      
+  # webコンテナ
+  web:
+    # コンテナ作成時に参照するDockerfileの場所
+    build: .
+    # コンテナ作成時に実行するコマンド
+    command: python3 manage.py runserver 0.0.0.0:8000
+    # ローカルとコンテナで同期（マウント）させるファイルを記述
+    # 「ローカル:コンテナ」のように書く
+    volumes:
+      - .:/code
+    # ポート番号。「ローカル側:コンテナ側」
+    ports:
+      - "8000:8000"
+    # コンテナとコンテナを名前解決で接続する。
+    depends_on:
+      - db
+    # 環境変数の設定
+    environment:
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
